@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ContentCommentService } from './content-comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -15,8 +15,8 @@ export class ContentCommentController {
   }
 
   @Get()
-  async findAll(): Promise<ContentComment[]> {
-    return await this.commentService.findAll();
+  async findAll(@Query('contentId') contentId: number): Promise<ContentComment[]> {
+    return await this.commentService.findAll(contentId);
   }
 
   @Get(':id')
@@ -28,10 +28,10 @@ export class ContentCommentController {
   @UseGuards(AuthGuard('jwt'))
   async update(
     @Param('id') id: number,
-    @Body() updateDto: Partial<CreateCommentDto>,
+    @Body('content') content: string,
     @Request() req
   ): Promise<ContentComment> {
-    return await this.commentService.update(id, updateDto, req.user.id);
+    return await this.commentService.update(id, content, req.user.id);
   }
 
   @Delete(':id')

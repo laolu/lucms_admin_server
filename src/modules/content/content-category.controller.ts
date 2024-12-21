@@ -37,6 +37,6 @@ export class ContentCategoryController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   async delete(@Param('id') id: number): Promise<void> {
-    await this.categoryService.delete(id);
+    await this.categoryService.remove(id);
   }
 } 

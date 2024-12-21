@@ -57,6 +57,6 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   async remove(@Param('id') id: number): Promise<void> {
-    return await this.usersService.remove(id);
+    return await this.usersService.delete(id);
   }
 } 

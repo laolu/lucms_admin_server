@@ -5,6 +5,7 @@ import { Content } from './entities/content.entity';
 import { ContentAttributeValue } from './entities/content-attribute-value.entity';
 import { ContentAttributeRelation } from './entities/content-attribute-relation.entity';
 import { CreateContentDto } from './dto/content.dto';
+import { ContentQueryDto } from './dto/content-query.dto';
 
 @Injectable()
 export class ContentService {
@@ -17,16 +18,8 @@ export class ContentService {
     private readonly attributeRelationRepository: Repository<ContentAttributeRelation>,
   ) {}
 
-  async findAll(query: {
-    page: number;
-    pageSize: number;
-    search?: string;
-    categoryId?: number;
-    isActive?: boolean;
-    sortBy?: string;
-    sort?: 'ASC' | 'DESC';
-  }) {
-    const { search, categoryId, isActive, sortBy, sort, page, pageSize } = query;
+  async findAll(query: ContentQueryDto) {
+    const { search, categoryId, isActive, sortBy = 'createdAt', sort = 'DESC', page = 1, pageSize = 10 } = query;
     
     const where: any = {};
     if (search) {
@@ -41,7 +34,7 @@ export class ContentService {
 
     const order: any = {};
     if (sortBy) {
-      order[sortBy] = sort || 'DESC';
+      order[sortBy] = sort;
     } else {
       order.createdAt = 'DESC';
     }
@@ -162,6 +155,7 @@ export class ContentService {
     if (updateDto.content) content.content = updateDto.content;
     if (typeof updateDto.isActive !== 'undefined') content.isActive = updateDto.isActive;
     if (typeof updateDto.sort !== 'undefined') content.sort = updateDto.sort;
+    if (updateDto.publishedAt) content.publishedAt = new Date(updateDto.publishedAt);
 
     await this.contentRepository.save(content);
 
@@ -171,16 +165,7 @@ export class ContentService {
       await this.attributeRelationRepository.delete({ content: { id } });
 
       // 创建新的关联
-      const attributeValues = await this.attributeValueRepository.findByIds(updateDto.attributeValueIds);
-      
-      const relations = attributeValues.map(value => {
-        return this.attributeRelationRepository.create({
-          content: { id },
-          attributeValue: value,
-        });
-      });
-
-      await this.attributeRelationRepository.save(relations);
+      await this.saveAttributeValues(id, updateDto.attributeValueIds);
     }
 
     return this.findOne(id);

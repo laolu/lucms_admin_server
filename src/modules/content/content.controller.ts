@@ -4,7 +4,15 @@ import { AdminGuard } from '../../guards/admin.guard';
 import { ContentService } from './content.service';
 import { CreateContentDto } from './dto/content.dto';
 import { Content } from './entities/content.entity';
-import { PaginationDto } from '@/common/dto/pagination.dto';
+import { ContentQueryDto } from './dto/content-query.dto';
+
+interface PaginatedContent {
+  items: Content[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 @Controller('contents')
 export class ContentController {
@@ -17,7 +25,7 @@ export class ContentController {
   }
 
   @Get()
-  async findAll(@Query() query: PaginationDto): Promise<Content[]> {
+  async findAll(@Query() query: ContentQueryDto): Promise<PaginatedContent> {
     return await this.contentService.findAll(query);
   }
 
@@ -30,7 +38,7 @@ export class ContentController {
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   async update(
     @Param('id') id: number,
-    @Body() updateData: Partial<Content>
+    @Body() updateData: Partial<CreateContentDto>
   ): Promise<Content> {
     return await this.contentService.update(id, updateData);
   }

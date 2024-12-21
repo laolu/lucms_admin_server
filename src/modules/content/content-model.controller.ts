@@ -36,6 +36,6 @@ export class ContentModelController {
   @Delete(':id')
   @UseGuards(AdminGuard)
   async delete(@Param('id') id: number): Promise<void> {
-    await this.contentModelService.delete(id);
+    await this.contentModelService.remove(id);
   }
 } 
