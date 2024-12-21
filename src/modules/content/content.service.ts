@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, QueryFailedError, In } from 'typeorm';
 import { Content } from './entities/content.entity';
@@ -9,6 +9,8 @@ import { ContentQueryDto } from './dto/content-query.dto';
 
 @Injectable()
 export class ContentService {
+  private readonly logger = new Logger(ContentService.name);
+
   constructor(
     @InjectRepository(Content)
     private readonly contentRepository: Repository<Content>,
@@ -101,11 +103,10 @@ export class ContentService {
 
     } catch (error) {
       // 详细的错误日志
-      console.error('创建内容失败:', {
-        error,
-        dto: createContentDto,
-        message: error.message,
+      this.logger.error('创建内容失败', {
+        error: error.message,
         stack: error.stack,
+        dto: createContentDto
       });
 
       if (error instanceof QueryFailedError) {
@@ -129,7 +130,11 @@ export class ContentService {
 
       await this.attributeRelationRepository.save(relations);
     } catch (error) {
-      console.error('保存属性值关联失败:', error);
+      this.logger.error('保存属性值关联失败', {
+        error: error.message,
+        contentId,
+        attributeValueIds
+      });
       throw new BadRequestException('保存属性值关联失败');
     }
   }
@@ -201,7 +206,10 @@ export class ContentService {
 
       return result;
     } catch (error) {
-      console.error('获取内容属性值关联失败:', error);
+      this.logger.error('获取内容属性值关联失败', {
+        error: error.message,
+        contentId: id
+      });
       throw new BadRequestException('获取内容属性值关联失败');
     }
   }

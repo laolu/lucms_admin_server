@@ -68,7 +68,6 @@ export class ContentCategoryService {
       } : null
     }));
 
-    console.log('查询到的分类列表:', JSON.stringify(categories, null, 2));
     return categories;
   }
 
@@ -117,10 +116,6 @@ export class ContentCategoryService {
   }
 
   async update(id: number, updateDto: Partial<CreateCategoryDto>): Promise<ContentCategory> {
-    console.log('更新分类，接收到的数据:', updateDto);
-    console.log('parentId 类型:', typeof updateDto.parentId);
-    console.log('parentId 值:', updateDto.parentId);
-
     const existingCategory = await this.findOne(id);
 
     // 如果要更新模型ID，验证模型是否存在
@@ -142,15 +137,12 @@ export class ContentCategoryService {
       modelId: updateDto.modelId ?? existingCategory.modelId,
       parentId: updateDto.parentId ?? existingCategory.parentId ?? 0, // 确保有值
     };
-
-    console.log('准备更新的数据:', updateData);
     
     // 使用 update 方法更新数据
     await this.categoryRepository.update(id, updateData);
 
     // 重新获更新后的分类
     const updatedCategory = await this.findOne(id);
-    console.log('更新后的分类:', updatedCategory);
     return updatedCategory;
   }
 
@@ -313,7 +305,6 @@ export class ContentCategoryService {
       attr.values.sort((a, b) => a.sort - b.sort);
     });
 
-    console.log('分类关联的模型:', JSON.stringify(model, null, 2));
     return model;
   }
 
