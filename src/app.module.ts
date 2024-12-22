@@ -22,8 +22,6 @@ import { ConfigModule as SystemConfigModule } from './modules/config/config.modu
 import { FriendLinkModule } from './modules/friend-link/friend-link.module';
 import { ArticleModule } from './modules/article/article.module';
 import { UploadModule } from './modules/upload/upload.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
-import { join } from 'path';
 
 @Module({
   imports: [
@@ -43,13 +41,6 @@ import { join } from 'path';
         },
       }),
       inject: [ConfigService],
-    }),
-    ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
-      serveRoot: '/uploads',
-      serveStaticOptions: {
-        index: false,
-      },
     }),
     AuthModule,
     UsersModule,

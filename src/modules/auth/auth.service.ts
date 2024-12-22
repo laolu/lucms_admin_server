@@ -147,7 +147,7 @@ export class AuthService {
       resetPasswordTokenExpiredAt: moment().add(1, 'hour').toDate()
     });
 
-    // 发送重置密码验证码
+    // 发送重置密码验���码
     if (user.phone) {
       await this.smsService.sendPasswordResetCode(user.phone);
     }
@@ -172,9 +172,9 @@ export class AuthService {
     return { message: 'Password has been reset successfully' };
   }
 
-  async verifyCode(verifyCodeDto: VerifyCodeDto) {
+  async verifyCode(userId: number, verifyCodeDto: VerifyCodeDto) {
     const user = await this.usersService.findByVerificationToken(verifyCodeDto.code);
-    if (!user) {
+    if (!user || user.id !== userId) {
       throw new BadRequestException('Invalid verification code');
     }
 

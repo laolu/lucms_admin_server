@@ -6,6 +6,7 @@ export interface Response<T> {
   data: T;
   code: number;
   message: string;
+  timestamp: string;
 }
 
 @Injectable()
@@ -16,6 +17,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> 
         data,
         code: 0,
         message: 'success',
+        timestamp: new Date().toISOString(),
       })),
     );
   }

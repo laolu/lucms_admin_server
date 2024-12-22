@@ -8,6 +8,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { VerifyPhoneDto } from './dto/verify-phone.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
+import { User } from '../users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -39,7 +40,10 @@ export class AuthController {
 
   @Post('reset-password')
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return await this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+    return await this.authService.resetPassword(
+      resetPasswordDto.token,
+      resetPasswordDto.newPassword
+    );
   }
 
   @Post('verify-email')
@@ -53,8 +57,15 @@ export class AuthController {
   }
 
   @Post('verify-code')
-  async verifyCode(@Body() verifyCodeDto: VerifyCodeDto) {
-    return await this.authService.verifyCode(verifyCodeDto);
+  @UseGuards(AuthGuard('jwt'))
+  async verifyCode(@Request() req, @Body() verifyCodeDto: VerifyCodeDto) {
+    return await this.authService.verifyCode(req.user.id, verifyCodeDto);
+  }
+
+  @Post('resend-code')
+  @UseGuards(AuthGuard('jwt'))
+  async resendVerificationCode(@Request() req) {
+    return await this.authService.resendVerificationCode(req.user.id);
   }
 
   @Get('profile')

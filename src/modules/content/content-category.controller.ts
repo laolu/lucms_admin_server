@@ -20,6 +20,16 @@ export class ContentCategoryController {
     return await this.categoryService.findAll();
   }
 
+  @Get('tree')
+  async getTree(): Promise<ContentCategory[]> {
+    return await this.categoryService.getTree();
+  }
+
+  @Get('content-tree')
+  async getContentTree(): Promise<ContentCategory[]> {
+    return await this.categoryService.getContentTree();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: number): Promise<ContentCategory> {
     return await this.categoryService.findOne(id);
@@ -36,7 +46,16 @@ export class ContentCategoryController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async delete(@Param('id') id: number): Promise<void> {
+  async remove(@Param('id') id: number): Promise<void> {
     await this.categoryService.remove(id);
+  }
+
+  @Patch(':id/sort')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  async updateSort(
+    @Param('id') id: number,
+    @Body('targetSort') targetSort: number
+  ): Promise<ContentCategory> {
+    return await this.categoryService.updateSort(id, targetSort);
   }
 } 

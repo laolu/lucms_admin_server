@@ -1,16 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, QueryFailedError, In } from 'typeorm';
 import { Content } from './entities/content.entity';
 import { ContentAttributeValue } from './entities/content-attribute-value.entity';
 import { ContentAttributeRelation } from './entities/content-attribute-relation.entity';
 import { CreateContentDto } from './dto/content.dto';
-import { ContentQueryDto } from './dto/content-query.dto';
 
 @Injectable()
 export class ContentService {
-  private readonly logger = new Logger(ContentService.name);
-
   constructor(
     @InjectRepository(Content)
     private readonly contentRepository: Repository<Content>,
@@ -20,8 +17,16 @@ export class ContentService {
     private readonly attributeRelationRepository: Repository<ContentAttributeRelation>,
   ) {}
 
-  async findAll(query: ContentQueryDto) {
-    const { search, categoryId, isActive, sortBy = 'createdAt', sort = 'DESC', page = 1, pageSize = 10 } = query;
+  async findAll(query: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    categoryId?: number;
+    isActive?: boolean;
+    sortBy?: string;
+    sort?: 'ASC' | 'DESC';
+  }) {
+    const { search, categoryId, isActive, sortBy, sort, page, pageSize } = query;
     
     const where: any = {};
     if (search) {
@@ -36,7 +41,7 @@ export class ContentService {
 
     const order: any = {};
     if (sortBy) {
-      order[sortBy] = sort;
+      order[sortBy] = sort || 'DESC';
     } else {
       order.createdAt = 'DESC';
     }
@@ -103,10 +108,11 @@ export class ContentService {
 
     } catch (error) {
       // 详细的错误日志
-      this.logger.error('创建内容失败', {
-        error: error.message,
+      console.error('创建内容失败:', {
+        error,
+        dto: createContentDto,
+        message: error.message,
         stack: error.stack,
-        dto: createContentDto
       });
 
       if (error instanceof QueryFailedError) {
@@ -130,11 +136,7 @@ export class ContentService {
 
       await this.attributeRelationRepository.save(relations);
     } catch (error) {
-      this.logger.error('保存属性值关联失败', {
-        error: error.message,
-        contentId,
-        attributeValueIds
-      });
+      console.error('保存属性值关联失败:', error);
       throw new BadRequestException('保存属性值关联失败');
     }
   }
@@ -160,7 +162,6 @@ export class ContentService {
     if (updateDto.content) content.content = updateDto.content;
     if (typeof updateDto.isActive !== 'undefined') content.isActive = updateDto.isActive;
     if (typeof updateDto.sort !== 'undefined') content.sort = updateDto.sort;
-    if (updateDto.publishedAt) content.publishedAt = new Date(updateDto.publishedAt);
 
     await this.contentRepository.save(content);
 
@@ -170,7 +171,16 @@ export class ContentService {
       await this.attributeRelationRepository.delete({ content: { id } });
 
       // 创建新的关联
-      await this.saveAttributeValues(id, updateDto.attributeValueIds);
+      const attributeValues = await this.attributeValueRepository.findByIds(updateDto.attributeValueIds);
+      
+      const relations = attributeValues.map(value => {
+        return this.attributeRelationRepository.create({
+          content: { id },
+          attributeValue: value,
+        });
+      });
+
+      await this.attributeRelationRepository.save(relations);
     }
 
     return this.findOne(id);
@@ -206,10 +216,7 @@ export class ContentService {
 
       return result;
     } catch (error) {
-      this.logger.error('获取内容属性值关联失败', {
-        error: error.message,
-        contentId: id
-      });
+      console.error('获取内容属性值关联失败:', error);
       throw new BadRequestException('获取内容属性值关联失败');
     }
   }

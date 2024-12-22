@@ -52,11 +52,13 @@ export class ConfigService {
     // 1. 获取邮件配置
     const emailConfigs = await this.findByGroup('email');
     // 2. 使用配置发送测试邮件
+    console.log('发送测试邮件', emailConfigs);
   }
 
   // 刷新配置缓存
   async refresh(): Promise<void> {
     // TODO: 实现配置缓存刷新的逻辑
     // 例如：清除 Redis 缓存等
+    console.log('刷新配置缓存');
   }
 } 

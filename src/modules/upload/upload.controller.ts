@@ -1,9 +1,11 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { AdminGuard } from '../../guards/admin.guard';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
+import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs';
 
 interface UploadResponse {
   url: string;
@@ -11,20 +13,35 @@ interface UploadResponse {
 
 @Controller('upload')
 export class UploadController {
+  private readonly uploadPath: string;
+
+  constructor(private configService: ConfigService) {
+    this.uploadPath = join(process.cwd(), 'uploads');
+    // 确保上传目录存在
+    if (!fs.existsSync(this.uploadPath)) {
+      fs.mkdirSync(this.uploadPath, { recursive: true });
+    }
+  }
+
   @Post()
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(process.cwd(), 'uploads'),
-        filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          callback(null, `${uniqueSuffix}${extname(file.originalname)}`);
+        destination: (_req, _file, callback) => {
+          callback(null, join(process.cwd(), 'uploads'));
+        },
+        filename: (_req, file, callback) => {
+          const name = file.originalname.split('.')[0];
+          const fileExtName = extname(file.originalname);
+          const randomName = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          callback(null, `${name}-${randomName}${fileExtName}`);
         },
       }),
-      fileFilter: (req, file, callback) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
-          return callback(new Error('只允许上传图片文件!'), false);
+      fileFilter: (_req, file, callback) => {
+        const ext = extname(file.originalname).toLowerCase();
+        if (!['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
+          return callback(new BadRequestException('只允许上传图片文件!'), false);
         }
         callback(null, true);
       },
@@ -34,7 +51,11 @@ export class UploadController {
     }),
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File): Promise<UploadResponse> {
-    const url = `/uploads/${file.filename}`;
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const baseUrl = this.configService.get<string>('APP_URL', 'http://localhost:8080');
+    const url = `${baseUrl}/uploads/${file.filename}`;
     return { url };
   }
 } 

@@ -11,8 +11,8 @@ export class FriendLinkController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async create(@Body() createFriendLinkDto: CreateFriendLinkDto): Promise<FriendLink> {
-    return await this.friendLinkService.create(createFriendLinkDto);
+  async create(@Body() createDto: CreateFriendLinkDto): Promise<FriendLink> {
+    return await this.friendLinkService.create(createDto);
   }
 
   @Get()
@@ -29,14 +29,29 @@ export class FriendLinkController {
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   async update(
     @Param('id') id: number,
-    @Body() updateFriendLinkDto: UpdateFriendLinkDto,
+    @Body() updateDto: UpdateFriendLinkDto,
   ): Promise<FriendLink> {
-    return await this.friendLinkService.update(id, updateFriendLinkDto);
+    return await this.friendLinkService.update(id, updateDto);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
   async remove(@Param('id') id: number): Promise<void> {
     await this.friendLinkService.remove(id);
+  }
+
+  @Patch(':id/toggle-visible')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  async toggleVisible(@Param('id') id: number): Promise<FriendLink> {
+    return await this.friendLinkService.toggleVisible(id);
+  }
+
+  @Patch(':id/sort')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  async updateSort(
+    @Param('id') id: number,
+    @Body('sort') sort: number,
+  ): Promise<FriendLink> {
+    return await this.friendLinkService.updateSort(id, sort);
   }
 } 

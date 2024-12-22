@@ -56,7 +56,33 @@ export class UsersController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async remove(@Param('id') id: number): Promise<void> {
-    return await this.usersService.delete(id);
+  async delete(@Param('id') id: number, @Request() req): Promise<void> {
+    // 不能删除自己
+    if (id === req.user.id) {
+      throw new ForbiddenException('Cannot delete yourself');
+    }
+    await this.usersService.delete(id);
+  }
+
+  @Post('profile/change-password')
+  @UseGuards(AuthGuard('jwt'))
+  async changePassword(
+    @Request() req,
+    @Body('oldPassword') oldPassword: string,
+    @Body('newPassword') newPassword: string
+  ): Promise<void> {
+    await this.usersService.changePassword(req.user.id, oldPassword, newPassword);
+  }
+
+  @Post(':id/verify-email')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  async verifyEmail(@Param('id') id: number): Promise<void> {
+    await this.usersService.verifyEmail(id);
+  }
+
+  @Post(':id/verify-phone')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
+  async verifyPhone(@Param('id') id: number): Promise<void> {
+    await this.usersService.verifyPhone(id);
   }
 } 
